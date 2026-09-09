@@ -68,7 +68,7 @@ input, textarea {
   inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 16px calc(80px + max(env(safe-area-inset-bottom, 0px), 20px)) 16px;
+  padding: 0 16px 100px 16px;
 }
 
 /* ---------- Tabbar ---------- */
@@ -82,12 +82,22 @@ input, textarea {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+  padding-bottom: 20px;
   z-index: 50;
+}
+.tabbar::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgb(28,28,32);
 }
 
 @media (prefers-color-scheme: light) {
   .tabbar { background: rgba(255,255,255,0.92); }
+  .tabbar::after { background: rgb(255,255,255); }
 }
 .tab {
   flex: 1;
