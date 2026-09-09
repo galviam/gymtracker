@@ -19,12 +19,6 @@
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-}
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -45,7 +39,11 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+  height: 100%;
+  overflow: hidden;
   overscroll-behavior-y: none;
+  position: fixed;
+  width: 100%;
 }
 
 button {
@@ -67,22 +65,24 @@ input, textarea {
 }
 
 .view {
-  flex: 1;
-  min-height: 0;
+  position: fixed;
+  inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 16px 24px 16px;
+  padding: 0 16px 100px 16px;
 }
 
 /* ---------- Tabbar ---------- */
 .tabbar {
-  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   background: rgb(28,28,32);
   border-top: 1px solid var(--border);
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
   z-index: 50;
-
 }
 
 
