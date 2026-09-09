@@ -19,6 +19,13 @@
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #F4F4F6;
@@ -38,11 +45,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  height: var(--app-height, 100%);
-  overflow: hidden;
   overscroll-behavior-y: none;
-  position: fixed;
-  width: 100%;
 }
 
 button {
@@ -64,40 +67,26 @@ input, textarea {
 }
 
 .view {
-  position: fixed;
-  inset: 0;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 16px 100px 16px;
+  padding: 0 16px 24px 16px;
 }
 
 /* ---------- Tabbar ---------- */
 .tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   display: flex;
-  background: rgba(28,28,32,0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgb(28,28,32);
   border-top: 1px solid var(--border);
-  padding-bottom: 20px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 50;
 }
-.tabbar::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: rgb(28,28,32);
-}
+
 
 @media (prefers-color-scheme: light) {
   .tabbar { background: rgba(255,255,255,0.92); }
-  .tabbar::after { background: rgb(255,255,255); }
 }
 .tab {
   flex: 1;
