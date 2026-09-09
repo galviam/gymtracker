@@ -8,13 +8,6 @@ const MUSCLE_GROUPS = ["Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps", "Pi
 const EXERCISE_TYPES = ["Barra", "Mancuerna", "Máquina", "Polea", "Peso corporal", "Otro"];
 const DEFAULT_REST_SECONDS = 90;
 
-// ============================================================
-// 👉 EDITA AQUÍ el flujo "Grupo de trabajo" que se ve al entrenar.
-// Cada grupo del flujo puede agrupar varios muscleGroup de la biblioteca.
-// Para añadir "Pecho" al flujo (no está incluido por defecto), añade un
-// objeto nuevo, por ejemplo:
-//   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
-// ============================================================
 const FLOW_GROUPS = [
   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
@@ -1088,7 +1081,8 @@ function renderTemplateList() {
     container.querySelector("#tpl-list").innerHTML = emptyState("📋", "Sin planning todavía", "Guarda una rutina como plantilla para empezarla en un toque cualquier día.");
   } else {
     state.templates.forEach(t => {
-      const row = el(`<div class="list-row"><div><div class="title">${t.name}</div><div class="subtitle">${t.exercises.length} ejercicios</div></div><button class="icon-btn" data-del>🗑</button></div>`);
+      const row = el(`<div class="list-row" style="cursor:pointer;"><div><div class="title">${t.name}</div><div class="subtitle">${t.exercises.length} ejercicios</div></div><button class="icon-btn" data-del>🗑</button></div>`);
+      row.addEventListener("click", () => openTemplateForm(t));
       row.querySelector("[data-del]").addEventListener("click", async (e) => {
         e.stopPropagation();
         if (!confirm("¿Eliminar esta plantilla?")) return;
@@ -1104,29 +1098,37 @@ function renderTemplateList() {
   return container;
 }
 
-function openTemplateForm() {
-  let selected = [];
+function openTemplateForm(existing) {
+  let selected = existing
+    ? existing.exercises.map(te => getExercise(te.exerciseId)).filter(Boolean)
+    : [];
+
   const backdrop = el(`<div class="sheet-backdrop">
     <div class="sheet">
-      <div class="sheet-header"><h2>Nueva plantilla</h2><button class="icon-btn" data-close>✕</button></div>
+      <div class="sheet-header"><h2>${existing ? "Editar rutina" : "Nueva rutina"}</h2><button class="icon-btn" data-close>✕</button></div>
       <div class="field-label">Nombre</div>
-      <input class="field" id="tpl-name" placeholder="Ej. Pecho + Tríceps" />
+      <input class="field" id="tpl-name" placeholder="Ej. Pecho + Tríceps" value="${existing ? existing.name : ""}" />
       <div class="field-label">Ejercicios</div>
       <div id="tpl-exercises"></div>
       <button class="btn-secondary" id="tpl-add-ex" style="margin-top:8px;">＋ Añadir ejercicio</button>
-      <button class="btn-primary" id="tpl-save" style="margin-top:14px;">Guardar plantilla</button>
+      <button class="btn-primary" id="tpl-save" style="margin-top:14px;">${existing ? "Guardar cambios" : "Guardar rutina"}</button>
+      ${existing ? `<button class="btn-secondary" style="margin-top:8px; color:var(--danger);" id="tpl-delete">Eliminar rutina</button>` : ""}
     </div>
   </div>`);
 
   const listWrap = backdrop.querySelector("#tpl-exercises");
   function refreshList() {
     listWrap.innerHTML = "";
+    if (!selected.length) {
+      listWrap.appendChild(el(`<div class="muted" style="padding:8px 0;">Todavía no has añadido ejercicios.</div>`));
+    }
     selected.forEach((ex, i) => {
       const row = el(`<div class="list-row"><div class="title">${ex.name}</div><button class="icon-btn" data-del>✕</button></div>`);
       row.querySelector("[data-del]").addEventListener("click", () => { selected.splice(i, 1); refreshList(); });
       listWrap.appendChild(row);
     });
   }
+  refreshList();
 
   backdrop.querySelector("#tpl-add-ex").addEventListener("click", () => {
     openExercisePicker((ex) => { selected.push(ex); refreshList(); });
@@ -1138,15 +1140,24 @@ function openTemplateForm() {
   backdrop.querySelector("#tpl-save").addEventListener("click", async () => {
     const name = backdrop.querySelector("#tpl-name").value.trim();
     if (!name || !selected.length) return;
-    const template = {
-      id: DB.uuid(), name, createdAt: new Date().toISOString(),
-      exercises: selected.map((ex, i) => ({ exerciseId: ex.id, order: i }))
-    };
+    const template = existing || { id: DB.uuid(), createdAt: new Date().toISOString() };
+    template.name = name;
+    template.exercises = selected.map((ex, i) => ({ exerciseId: ex.id, order: i }));
     await DB.put("templates", template);
     state.templates = await DB.getAll("templates");
     backdrop.remove();
     navigate("planning");
   });
+
+  if (existing) {
+    backdrop.querySelector("#tpl-delete").addEventListener("click", async () => {
+      if (!confirm("¿Eliminar esta rutina?")) return;
+      await DB.remove("templates", existing.id);
+      state.templates = await DB.getAll("templates");
+      backdrop.remove();
+      navigate("planning");
+    });
+  }
 
   document.body.appendChild(backdrop);
 }
