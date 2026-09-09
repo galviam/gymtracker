@@ -27,6 +27,17 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
+
+  <div id="debug-badge" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:red; color:white; font-size:10px; padding:4px; text-align:center;">
+    v21 · safe-bottom: <span id="debug-safebottom"></span>
+  </div>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom');
+      document.getElementById('debug-safebottom').textContent = val || '(vacío)';
+    });
+  </script>
+
   <div id="app">
     <!-- Cada vista se pinta aquí mediante JS (ver js/app.js) -->
     <main id="view" class="view"></main>
