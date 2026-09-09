@@ -38,7 +38,11 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+  height: 100%;
+  overflow: hidden;     
   overscroll-behavior-y: none;
+  position: fixed;        
+  width: 100%;
 }
 
 button {
@@ -57,9 +61,6 @@ input, textarea {
   border-radius: var(--radius-sm);
   padding: 10px 12px;
   font-size: 16px; /* evita el zoom automático de iOS al enfocar */
-}
-
-#app {
 }
 
 .view {
