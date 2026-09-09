@@ -274,15 +274,25 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 
 /* ---------- Header row with back / action ---------- */
 .top-row {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  padding: calc(var(--safe-top) + 8px) 0 10px;
+  margin: calc(var(--safe-top) * -1 - 8px) -16px 12px;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: linear-gradient(var(--bg) 75%, transparent);
 }
 .icon-btn {
-  font-size: 20px;
-  padding: 6px;
+  font-size: 15px;
+  padding: 6px 10px;
   color: var(--text-secondary);
+  background: var(--surface);
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 .record-banner {
   display: flex;

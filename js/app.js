@@ -8,6 +8,13 @@ const MUSCLE_GROUPS = ["Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps", "Pi
 const EXERCISE_TYPES = ["Barra", "Mancuerna", "Máquina", "Polea", "Peso corporal", "Otro"];
 const DEFAULT_REST_SECONDS = 90;
 
+// ============================================================
+// 👉 EDITA AQUÍ el flujo "Grupo de trabajo" que se ve al entrenar.
+// Cada grupo del flujo puede agrupar varios muscleGroup de la biblioteca.
+// Para añadir "Pecho" al flujo (no está incluido por defecto), añade un
+// objeto nuevo, por ejemplo:
+//   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
+// ============================================================
 const FLOW_GROUPS = [
   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
@@ -987,15 +994,20 @@ function renderExerciseProgress() {
           <div class="muted" style="font-size:12px;">${DateFmt.dayMonth(record.date)}</div>
         </div>
       </div>` : ""}
-    ${points.length >= 2 ? `
+    ${points.length >= 2 ? (() => {
+      const styles = getComputedStyle(document.documentElement);
+      const accentColor = styles.getPropertyValue("--accent").trim();
+      const recordColor = styles.getPropertyValue("--record").trim();
+      return `
       <div class="card">
         <div style="font-weight:700; margin-bottom:8px;">Evolución del peso máximo</div>
-        ${Charts.lineChart(points.map(p => ({ x: p.date, y: p.maxWeight })))}
+        ${Charts.lineChart(points.map(p => ({ x: p.date, y: p.maxWeight })), { color: accentColor })}
       </div>
       <div class="card">
         <div style="font-weight:700; margin-bottom:8px;">Volumen total por entrenamiento</div>
-        ${Charts.lineChart(points.map(p => ({ x: p.date, y: p.totalVolume })), { color: "#FFB020" })}
-      </div>` : `<div class="muted card">Registra este ejercicio en al menos dos entrenamientos para ver la evolución en gráficos.</div>`}
+        ${Charts.lineChart(points.map(p => ({ x: p.date, y: p.totalVolume })), { color: recordColor })}
+      </div>`;
+    })() : `<div class="muted card">Registra este ejercicio en al menos dos entrenamientos para ver la evolución en gráficos.</div>`}
     <div class="card">
       <div style="font-weight:700; margin-bottom:8px;">Historial</div>
       ${[...points].reverse().map(p => `
