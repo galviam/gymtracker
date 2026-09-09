@@ -8,13 +8,6 @@ const MUSCLE_GROUPS = ["Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps", "Pi
 const EXERCISE_TYPES = ["Barra", "Mancuerna", "Máquina", "Polea", "Peso corporal", "Otro"];
 const DEFAULT_REST_SECONDS = 90;
 
-// ============================================================
-// 👉 EDITA AQUÍ el flujo "Grupo de trabajo" que se ve al entrenar.
-// Cada grupo del flujo puede agrupar varios muscleGroup de la biblioteca.
-// Para añadir "Pecho" al flujo (no está incluido por defecto), añade un
-// objeto nuevo, por ejemplo:
-//   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
-// ============================================================
 const FLOW_GROUPS = [
   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
