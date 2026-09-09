@@ -1173,7 +1173,7 @@ function renderExerciseLibrary() {
 function renderTemplateList() {
   const container = el(`<div>
     <div class="top-row">
-      <div class="page-title" style="font-size:28px;">Planning</div>
+      <div class="top-row-title" style="padding-left:0;">Planning</div>
       <button class="icon-btn" id="add-btn">＋</button>
     </div>
     <div class="page-subtitle">Tus rutinas guardadas</div>
