@@ -6,7 +6,7 @@
  */
 const DB = (() => {
   const DB_NAME = "gymtracker";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   let dbPromise = null;
 
   function open() {
@@ -22,8 +22,11 @@ const DB = (() => {
           const store = db.createObjectStore("workouts", { keyPath: "id" });
           store.createIndex("date", "date");
         }
-        if (!db.objectStoreNames.contains("templates")) {
+                if (!db.objectStoreNames.contains("templates")) {
           db.createObjectStore("templates", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("settings")) {
+          db.createObjectStore("settings", { keyPath: "id" });
         }
       };
       req.onsuccess = () => resolve(req.result);

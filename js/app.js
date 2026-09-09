@@ -16,10 +16,11 @@ const DEFAULT_REST_SECONDS = 90;
 //   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
 // ============================================================
 const FLOW_GROUPS = [
-  { key: "Hombro", label: "Hombro", icon: "🏋️", groups: ["Hombros"] },
-  { key: "Triceps", label: "Tríceps", icon: "💥", groups: ["Tríceps"] },
-  { key: "Biceps", label: "Bíceps", icon: "💪", groups: ["Bíceps"] },
+  { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
+  { key: "Hombro", label: "Hombro", icon: "🙌", groups: ["Hombros"] },
+  { key: "Biceps", label: "Bíceps", icon: "💪", groups: ["Bíceps"] },
+  { key: "Triceps", label: "Tríceps", icon: "💥", groups: ["Tríceps"] },
   { key: "Pierna", label: "Pierna", icon: "🦵", groups: ["Piernas", "Cuádriceps", "Isquiotibiales", "Gemelos"] },
   { key: "Gluteo", label: "Glúteo", icon: "🍑", groups: ["Glúteos"] },
   { key: "Abdomen", label: "Abdomen", icon: "🔷", groups: ["Abdominales"] },
@@ -33,8 +34,24 @@ const state = {
   workouts: [],
   templates: [],
   activeWorkoutId: null,
+  settings: { defaultRestSeconds: DEFAULT_REST_SECONDS, theme: "pink" },
   restTimer: { active: false, seconds: 0, intervalId: null },
 };
+
+async function loadSettings() {
+  const saved = await DB.get("settings", "app-settings");
+  if (saved) state.settings = { defaultRestSeconds: saved.defaultRestSeconds, theme: saved.theme || "pink" };
+  applyTheme();
+}
+
+async function saveSettings() {
+  await DB.put("settings", { id: "app-settings", ...state.settings });
+  applyTheme();
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", state.settings.theme);
+}
 
 const $view = document.getElementById("view");
 const $tabbar = document.getElementById("tabbar");
@@ -107,6 +124,7 @@ async function bootstrap() {
   state.exercises = await DB.getAll("exercises");
   await reloadWorkouts();
   state.templates = await DB.getAll("templates");
+  await loadSettings();
 
   setupTabbar();
   setupRestTimerControls();
@@ -125,11 +143,7 @@ function setupTabbar() {
   $tabbar.querySelectorAll(".tab").forEach(btn => {
     btn.addEventListener("click", () => {
       state.tab = btn.dataset.tab;
-      if (state.tab === "train") {
-        navigate(trainEntryRoute());
-      } else {
-        navigate(state.tab);
-      }
+      navigate(state.tab === "planning" ? "planning" : state.tab);
     });
   });
 }
@@ -165,13 +179,13 @@ function render() {
     "train/group": renderGroupPicker,
     "train/exercise": renderExerciseSelectForGroup,
     "train/log": renderLogExercise,
+    "planning": renderTemplateList,
     "history": renderHistory,
     "history/detail": renderWorkoutDetail,
     "progress": renderProgressOverview,
     "progress/detail": renderExerciseProgress,
     "settings": renderSettings,
     "settings/exercises": renderExerciseLibrary,
-    "settings/templates": renderTemplateList,
   };
 
   const renderFn = routes[state.route] || renderHome;
@@ -210,7 +224,7 @@ function renderHome() {
 
   const container = el(`<div>
     <div class="page-title">Hoy</div>
-    <div class="muted" style="margin-bottom:16px;">${DateFmt.fullDayMonth(new Date())}</div>
+    <div class="page-subtitle">${DateFmt.fullDayMonth(new Date())}</div>
     ${todayWorkout && todayWorkout.finishedAt ? `<div class="muted" style="color:var(--success); font-weight:700; margin-bottom:14px;">✓ Ya has entrenado hoy</div>` : ""}
     <div id="start-btn"></div>
     ${lastFinished ? `
@@ -496,7 +510,7 @@ function renderLogExercise() {
   const currentSet = we.sets[we.sets.length - 1];
   let workingWeight = currentSet ? currentSet.weight : (lastSet ? lastSet.weight : 20);
   let workingReps = currentSet ? currentSet.repetitions : (lastSet ? lastSet.repetitions : 8);
-  if (!we.restSeconds) we.restSeconds = DEFAULT_REST_SECONDS;
+  if (!we.restSeconds) we.restSeconds = state.settings.defaultRestSeconds;
 
   const container = el(`<div>
     <div class="top-row">
@@ -592,7 +606,7 @@ function renderLogExercise() {
     const repetitions = parseInt(repsInput.value) || 0;
     we.sets.push({ id: DB.uuid(), order: we.sets.length, weight, repetitions, rir: null, rpe: null, completed: true });
     await saveWorkout(workout);
-    startRestTimer(we.restSeconds || DEFAULT_REST_SECONDS);
+    startRestTimer(we.restSeconds || state.settings.defaultRestSeconds);
     navigate("train/log", { weId: we.id });
   });
 
@@ -951,18 +965,81 @@ function renderSettings() {
     <div class="page-title">Ajustes</div>
     <div class="section-title">Datos</div>
     <div class="list-row" id="go-exercises" style="cursor:pointer;"><div class="title">Biblioteca de ejercicios</div><div class="muted">›</div></div>
-    <div class="list-row" id="go-templates" style="cursor:pointer;"><div class="title">Plantillas de entrenamiento</div><div class="muted">›</div></div>
+
     <div class="section-title">Preferencias</div>
-    <div class="list-row"><div class="title">Unidad de peso</div><div class="muted">Kilogramos</div></div>
-    <div class="list-row"><div class="title">Descanso por defecto</div><div class="muted">90 s</div></div>
+    <div class="card">
+      <div class="list-row" style="background:none; padding:0 0 12px;">
+        <div class="title">Unidad de peso</div>
+        <div class="muted">Kilogramos</div>
+      </div>
+      <div class="title" style="margin-bottom:8px;">Descanso por defecto</div>
+      <div class="weight-control" style="margin:0 0 6px;">
+        <button class="stepper-btn" data-rest="-15">−</button>
+        <div class="stepper-value">
+          <input type="number" inputmode="numeric" id="rest-input" value="${state.settings.defaultRestSeconds}" />
+          <span class="unit">segundos</span>
+        </div>
+        <button class="stepper-btn" data-rest="15">+</button>
+      </div>
+      <div class="rest-chip-row" id="rest-chips" style="margin-bottom:18px;"></div>
+      <div class="title" style="margin-bottom:8px;">Color de la app</div>
+      <div class="theme-swatch-row" id="theme-swatches"></div>
+    </div>
+
     <div class="section-title">Estadísticas</div>
     <div class="list-row"><div class="title">Entrenamientos registrados</div><div class="muted">${finishedCount}</div></div>
     <div class="list-row"><div class="title">Ejercicios en la biblioteca</div><div class="muted">${state.exercises.length}</div></div>
     <div class="section-title">Acerca de</div>
     <div class="muted" style="font-size:13px; line-height:1.5;">Todos los datos se guardan localmente en este dispositivo (IndexedDB). No hay servidor ni cuenta asociada.</div>
   </div>`);
+
   container.querySelector("#go-exercises").addEventListener("click", () => navigate("settings/exercises"));
-  container.querySelector("#go-templates").addEventListener("click", () => navigate("settings/templates"));
+
+  const restInput = container.querySelector("#rest-input");
+  container.querySelectorAll("[data-rest]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const delta = parseInt(btn.dataset.rest);
+      const value = Math.max(15, (parseInt(restInput.value) || 0) + delta);
+      restInput.value = value;
+      state.settings.defaultRestSeconds = value;
+      await saveSettings();
+    });
+  });
+  restInput.addEventListener("change", async () => {
+    state.settings.defaultRestSeconds = Math.max(15, parseInt(restInput.value) || DEFAULT_REST_SECONDS);
+    restInput.value = state.settings.defaultRestSeconds;
+    await saveSettings();
+  });
+
+  const restChips = container.querySelector("#rest-chips");
+  [45, 60, 90, 120, 150].forEach(sec => {
+    const chip = el(`<span class="chip ${state.settings.defaultRestSeconds === sec ? "selected" : ""}">${sec}s</span>`);
+    chip.addEventListener("click", async () => {
+      state.settings.defaultRestSeconds = sec;
+      await saveSettings();
+      navigate("settings");
+    });
+    restChips.appendChild(chip);
+  });
+
+  const THEMES = [
+    { key: "pink", color: "#E0399B" },
+    { key: "blue", color: "#2F5FFF" },
+    { key: "orange", color: "#FF7A29" },
+    { key: "red", color: "#E0293D" },
+    { key: "green", color: "#1FA95C" },
+  ];
+  const swatchWrap = container.querySelector("#theme-swatches");
+  THEMES.forEach(t => {
+    const swatch = el(`<div class="theme-swatch ${state.settings.theme === t.key ? "selected" : ""}" style="background:${t.color};"></div>`);
+    swatch.addEventListener("click", async () => {
+      state.settings.theme = t.key;
+      await saveSettings();
+      navigate("settings");
+    });
+    swatchWrap.appendChild(swatch);
+  });
+
   return container;
 }
 
@@ -999,14 +1076,16 @@ function renderExerciseLibrary() {
 
 function renderTemplateList() {
   const container = el(`<div>
-    <div class="top-row"><button class="icon-btn" id="back-btn">‹ Volver</button><button class="icon-btn" id="add-btn">＋</button></div>
-    <h1 style="font-size:24px; margin-bottom:12px;">Plantillas</h1>
+    <div class="top-row">
+      <div class="page-title" style="font-size:28px;">Planning</div>
+      <button class="icon-btn" id="add-btn">＋</button>
+    </div>
+    <div class="page-subtitle">Tus rutinas guardadas</div>
     <div id="tpl-list"></div>
   </div>`);
-  container.querySelector("#back-btn").addEventListener("click", () => navigate("settings"));
 
   if (!state.templates.length) {
-    container.querySelector("#tpl-list").innerHTML = emptyState("📦", "Sin plantillas", "Crea una plantilla para iniciar entrenamientos habituales en un toque.");
+    container.querySelector("#tpl-list").innerHTML = emptyState("📋", "Sin planning todavía", "Guarda una rutina como plantilla para empezarla en un toque cualquier día.");
   } else {
     state.templates.forEach(t => {
       const row = el(`<div class="list-row"><div><div class="title">${t.name}</div><div class="subtitle">${t.exercises.length} ejercicios</div></div><button class="icon-btn" data-del>🗑</button></div>`);
@@ -1015,7 +1094,7 @@ function renderTemplateList() {
         if (!confirm("¿Eliminar esta plantilla?")) return;
         await DB.remove("templates", t.id);
         state.templates = await DB.getAll("templates");
-        navigate("settings/templates");
+        navigate("planning");
       });
       container.querySelector("#tpl-list").appendChild(row);
     });
@@ -1066,7 +1145,7 @@ function openTemplateForm() {
     await DB.put("templates", template);
     state.templates = await DB.getAll("templates");
     backdrop.remove();
-    navigate("settings/templates");
+    navigate("planning");
   });
 
   document.body.appendChild(backdrop);
