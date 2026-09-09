@@ -40,10 +40,7 @@ html, body {
   color: var(--text);
   font-family: var(--font-body);
   height: 100%;
-  overflow: hidden;
   overscroll-behavior-y: none;
-  position: fixed;
-  width: 100%;
 }
 
 button {
