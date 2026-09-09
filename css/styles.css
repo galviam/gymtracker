@@ -38,10 +38,10 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  height: 100%;
-  overflow: hidden;     
+  height: var(--app-height, 100%);
+  overflow: hidden;
   overscroll-behavior-y: none;
-  position: fixed;        
+  position: fixed;
   width: 100%;
 }
 
