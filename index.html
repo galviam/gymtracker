@@ -32,17 +32,6 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const probe = document.createElement('div');
-      probe.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
-      document.body.appendChild(probe);
-      const val = getComputedStyle(probe).paddingBottom;
-      document.getElementById('debug-safebottom').textContent = val;
-      probe.remove();
-    });
-  </script>
 
   <div id="app">
     <!-- Cada vista se pinta aquí mediante JS (ver js/app.js) -->
