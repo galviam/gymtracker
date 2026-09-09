@@ -875,8 +875,16 @@ function openExercisePicker(onSelect) {
    ================================================================ */
 function renderHistory() {
   const finished = state.workouts.filter(w => w.finishedAt);
+
+  const container = el(`<div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Historial</div></div>
+    <div id="history-content"></div>
+  </div>`);
+  const content = container.querySelector("#history-content");
+
   if (!finished.length) {
-    return el(emptyState("📅", "Sin entrenamientos todavía", "Tus entrenamientos finalizados aparecerán aquí."));
+    content.innerHTML = emptyState("📅", "Sin entrenamientos todavía", "Tus entrenamientos finalizados aparecerán aquí.");
+    return container;
   }
 
   const groups = {};
@@ -886,10 +894,8 @@ function renderHistory() {
     (groups[key] = groups[key] || { label: DateFmt.monthYear(d), items: [] }).items.push(w);
   });
 
-  const container = el(`<div><div class="page-title">Historial</div><div id="groups"></div></div>`);
-  const groupsWrap = container.querySelector("#groups");
   Object.values(groups).forEach(group => {
-    groupsWrap.appendChild(el(`<div class="section-title">${group.label}</div>`));
+    content.appendChild(el(`<div class="section-title">${group.label}</div>`));
     const list = el(`<div></div>`);
     group.items.forEach(w => {
       const row = el(`<div class="list-row" style="cursor:pointer;">
@@ -899,7 +905,7 @@ function renderHistory() {
       row.addEventListener("click", () => navigate("history/detail", { id: w.id }));
       list.appendChild(row);
     });
-    groupsWrap.appendChild(list);
+    content.appendChild(list);
   });
   return container;
 }
