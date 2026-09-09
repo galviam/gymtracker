@@ -68,7 +68,7 @@ input, textarea {
   inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 16px calc(80px + var(--safe-bottom)) 16px;
+  padding: 0 16px calc(80px + env(safe-area-inset-bottom, 0px)) 16px;
 }
 
 /* ---------- Tabbar ---------- */
@@ -82,7 +82,7 @@ input, textarea {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  padding-bottom: var(--safe-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 50;
 }
 
@@ -230,7 +230,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   position: fixed;
   left: 16px;
   right: 16px;
-  bottom: calc(72px + var(--safe-bottom));
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -281,7 +281,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: calc(var(--safe-top) + 14px) 16px 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
   margin: 0 -16px 12px;
   background: var(--bg);
 }
@@ -338,7 +338,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 
 .sheet-footer {
   flex-shrink: 0;
-  padding: 12px 16px calc(16px + var(--safe-bottom));
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   background: var(--bg);
 }
