@@ -224,7 +224,7 @@ function renderHome() {
   const recent = state.workouts.filter(w => w.finishedAt).slice(0, 3);
 
   const container = el(`<div>
-    <div class="page-title">Hoy</div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Hoy</div></div>
     <div class="page-subtitle">${DateFmt.fullDayMonth(new Date())}</div>
     ${todayWorkout && todayWorkout.finishedAt ? `<div class="muted" style="color:var(--success); font-weight:700; margin-bottom:14px;">✓ Ya has entrenado hoy</div>` : ""}
     <div id="start-btn"></div>
@@ -413,8 +413,8 @@ function renderExerciseSelectForGroup() {
   const container = el(`<div>
     <div class="top-row">
       <button class="icon-btn" id="back-btn">‹ Volver</button>
+      <div class="top-row-title">Elige el ejercicio</div>
     </div>
-    <h1 style="font-size:24px; margin-bottom:2px;">Elige el ejercicio</h1>
     <div class="muted" style="font-size:13px; margin-bottom:14px;">Desliza para ver más, o cambia de grupo</div>
     <div class="group-switch-row" id="group-switch"></div>
     <div class="exercise-carousel" id="exercise-carousel"></div>
@@ -522,11 +522,11 @@ function renderLogExercise() {
 
   const container = el(`<div>
     <div class="top-row">
-      <button class="icon-btn" id="back-btn">‹ Cambiar ejercicio</button>
+      <button class="icon-btn" id="back-btn">‹ Cambiar</button>
+      <div class="top-row-title">${exercise ? exercise.name : "Ejercicio"}</div>
       <button class="icon-btn" id="finish-icon" title="Finalizar">✓</button>
     </div>
     ${exerciseThumbHTML(exercise, "large")}
-    <h1 style="font-size:24px; margin-bottom:2px;">${exercise ? exercise.name : "Ejercicio"}</h1>
     <div class="muted" style="font-size:13px; margin-bottom:6px;">${exercise ? exercise.muscleGroup : ""}</div>
 
     ${last ? `<div class="muted" style="font-size:12px; margin-bottom:10px;">Última vez: ${last.sets.map(s => `${fmtWeight(s.weight)} kg × ${s.repetitions}`).join(" · ")}</div>` : ""}
@@ -590,23 +590,43 @@ function renderLogExercise() {
     restChips.appendChild(chip);
   });
 
-  function renderHistory() {
-    const hist = container.querySelector("#set-history");
-    hist.innerHTML = "";
-    we.sets.forEach((s, i) => {
-      const row = el(`<div class="set-history-row">
-        <span>Serie ${i + 1}</span>
-        <span>${fmtWeight(s.weight)} kg × ${s.repetitions}</span>
-        <button class="icon-btn" data-del-set="${s.id}">✕</button>
-      </div>`);
-      row.querySelector("[data-del-set]").addEventListener("click", async () => {
-        we.sets = we.sets.filter(x => x.id !== s.id);
-        await saveWorkout(workout);
-        navigate("train/log", { weId: we.id });
-      });
-      hist.appendChild(row);
-    });
+function renderHistory() {
+  const finished = state.workouts.filter(w => w.finishedAt);
+
+  const container = el(`<div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Historial</div></div>
+    <div id="history-content"></div>
+  </div>`);
+  const content = container.querySelector("#history-content");
+
+  if (!finished.length) {
+    content.innerHTML = emptyState("📅", "Sin entrenamientos todavía", "Tus entrenamientos finalizados aparecerán aquí.");
+    return container;
   }
+
+  const groups = {};
+  finished.forEach(w => {
+    const d = new Date(w.date);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    (groups[key] = groups[key] || { label: DateFmt.monthYear(d), items: [] }).items.push(w);
+  });
+
+  Object.values(groups).forEach(group => {
+    content.appendChild(el(`<div class="section-title">${group.label}</div>`));
+    const list = el(`<div></div>`);
+    group.items.forEach(w => {
+      const row = el(`<div class="list-row" style="cursor:pointer;">
+        <div><div class="subtitle">${DateFmt.dayMonth(new Date(w.date))}</div><div class="title">${w.name}</div></div>
+        <div class="muted">›</div>
+      </div>`);
+      row.addEventListener("click", () => navigate("history/detail", { id: w.id }));
+      list.appendChild(row);
+    });
+    content.appendChild(list);
+  });
+  return container;
+}
+
   renderHistory();
 
   container.querySelector("#complete-set-btn").addEventListener("click", async () => {
@@ -883,9 +903,9 @@ function renderWorkoutDetail() {
   const container = el(`<div>
     <div class="top-row">
       <button class="icon-btn" id="back-btn">‹ Volver</button>
+      <div class="top-row-title">${workout.name}</div>
       <button class="icon-btn" id="delete-btn">🗑</button>
     </div>
-    <h1 style="font-size:24px;">${workout.name}</h1>
     <div class="muted" style="font-size:13px; margin-bottom:12px;">${DateFmt.fullDayMonth(new Date(workout.date))}</div>
     <div class="stat-grid" style="margin-bottom:16px;">
       <div class="stat-card"><div class="value">${Math.round(totalVolume(workout))}</div><div class="label">Volumen (kg)</div></div>
@@ -960,11 +980,18 @@ function bestByWeight(exerciseId) {
 
 function renderProgressOverview() {
   const withHistory = state.exercises.filter(ex => progressPoints(ex.id).length > 0);
-  if (!withHistory.length) {
-    return el(emptyState("📈", "Todavía sin datos", "Registra entrenamientos para ver aquí tu progreso."));
-  }
-  const container = el(`<div><div class="page-title">Progreso</div><div id="ex-list"></div></div>`);
+
+  const container = el(`<div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Progreso</div></div>
+    <div id="ex-list"></div>
+  </div>`);
   const list = container.querySelector("#ex-list");
+
+  if (!withHistory.length) {
+    list.innerHTML = emptyState("📈", "Todavía sin datos", "Registra entrenamientos para ver aquí tu progreso.");
+    return container;
+  }
+
   withHistory.sort((a, b) => a.name.localeCompare(b.name)).forEach(ex => {
     const record = bestByWeight(ex.id);
     const row = el(`<div class="list-row" style="cursor:pointer;">
@@ -984,8 +1011,10 @@ function renderExerciseProgress() {
   const record = bestByWeight(exercise.id);
 
   const container = el(`<div>
-    <div class="top-row"><button class="icon-btn" id="back-btn">‹ Volver</button></div>
-    <h1 style="font-size:24px; margin-bottom:12px;">${exercise.name}</h1>
+    <div class="top-row">
+      <button class="icon-btn" id="back-btn">‹ Volver</button>
+      <div class="top-row-title">${exercise.name}</div>
+    </div>
     ${record ? `<div class="record-banner">
         <div class="emoji">🏆</div>
         <div>
@@ -1029,7 +1058,7 @@ function renderExerciseProgress() {
 function renderSettings() {
   const finishedCount = state.workouts.filter(w => w.finishedAt).length;
   const container = el(`<div>
-    <div class="page-title">Ajustes</div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Ajustes</div></div>
     <div class="section-title">Datos</div>
     <div class="list-row" id="go-exercises" style="cursor:pointer;"><div class="title">Biblioteca de ejercicios</div><div class="muted">›</div></div>
 
@@ -1112,8 +1141,11 @@ function renderSettings() {
 
 function renderExerciseLibrary() {
   const container = el(`<div>
-    <div class="top-row"><button class="icon-btn" id="back-btn">‹ Volver</button><button class="icon-btn" id="add-btn">＋</button></div>
-    <h1 style="font-size:24px; margin-bottom:12px;">Ejercicios</h1>
+    <div class="top-row">
+      <button class="icon-btn" id="back-btn">‹ Volver</button>
+      <div class="top-row-title">Ejercicios</div>
+      <button class="icon-btn" id="add-btn">＋</button>
+    </div>
     <div id="ex-groups"></div>
   </div>`);
   container.querySelector("#back-btn").addEventListener("click", () => navigate("settings"));
