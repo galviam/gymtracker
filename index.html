@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>GymTracker</title>
+
+  <!-- PWA / iOS home screen -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#121214" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GymTracker" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Cada vista se pinta aquí mediante JS (ver js/app.js) -->
+    <main id="view" class="view"></main>
+
+    <div id="rest-timer" class="rest-timer hidden">
+      <span class="rest-timer__icon">⏱</span>
+      <span id="rest-timer-value" class="rest-timer__value">1:30</span>
+      <div class="rest-timer__actions">
+        <button data-rest-adjust="-15" aria-label="Restar 15 segundos">−15</button>
+        <button data-rest-adjust="15" aria-label="Sumar 15 segundos">+15</button>
+        <button id="rest-timer-close" aria-label="Cerrar temporizador">✕</button>
+      </div>
+    </div>
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab" data-tab="home">
+        <span class="tab__icon">🏠</span><span class="tab__label">Inicio</span>
+      </button>
+      <button class="tab" data-tab="train">
+        <span class="tab__icon">🏋️</span><span class="tab__label">Entrenar</span>
+      </button>
+      <button class="tab" data-tab="history">
+        <span class="tab__icon">📅</span><span class="tab__label">Historial</span>
+      </button>
+      <button class="tab" data-tab="progress">
+        <span class="tab__icon">📈</span><span class="tab__label">Progreso</span>
+      </button>
+      <button class="tab" data-tab="settings">
+        <span class="tab__icon">⚙️</span><span class="tab__label">Ajustes</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
