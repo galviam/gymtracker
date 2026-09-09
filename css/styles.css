@@ -296,7 +296,7 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
 }
 .record-banner .emoji { font-size: 30px; }
 
-/* Modal sheets */
+/* Modal sheets — cabecera y acciones fijas, solo el contenido central hace scroll */
 .sheet-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60;
   display: flex; align-items: flex-end;
@@ -306,18 +306,36 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   width: 100%;
   max-height: 88vh;
   border-radius: 20px 20px 0 0;
-  padding: 16px 16px calc(24px + var(--safe-bottom));
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .sheet-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 14px;
+  padding: 16px 16px 10px;
+  flex-shrink: 0;
 }
-.sheet-header h2 { font-size: 20px; }
+.sheet-header h2 { font-family: var(--font-display); font-size: 20px; }
+
+.sheet-fixed-top { padding: 0 16px 6px; flex-shrink: 0; }
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+}
+
+.sheet-footer {
+  flex-shrink: 0;
+  padding: 12px 16px calc(16px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
 
 .search-input { width: 100%; margin-bottom: 12px; }
 
-.muscle-scroll { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; }
+.muscle-scroll { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 0; }
 .muscle-scroll .chip { white-space: nowrap; margin: 0; }
 
 .field-label { font-size: 12px; color: var(--text-secondary); margin: 14px 0 6px; }

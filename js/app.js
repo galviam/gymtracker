@@ -8,6 +8,13 @@ const MUSCLE_GROUPS = ["Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps", "Pi
 const EXERCISE_TYPES = ["Barra", "Mancuerna", "Máquina", "Polea", "Peso corporal", "Otro"];
 const DEFAULT_REST_SECONDS = 90;
 
+// ============================================================
+// 👉 EDITA AQUÍ el flujo "Grupo de trabajo" que se ve al entrenar.
+// Cada grupo del flujo puede agrupar varios muscleGroup de la biblioteca.
+// Para añadir "Pecho" al flujo (no está incluido por defecto), añade un
+// objeto nuevo, por ejemplo:
+//   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
+// ============================================================
 const FLOW_GROUPS = [
   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
@@ -27,6 +34,7 @@ const state = {
   workouts: [],
   templates: [],
   activeWorkoutId: null,
+  currentGroupKey: null,
   settings: { defaultRestSeconds: DEFAULT_REST_SECONDS, theme: "pink" },
   restTimer: { active: false, seconds: 0, intervalId: null },
 };
@@ -321,9 +329,10 @@ async function createWorkout(name) {
 async function createWorkoutFromTemplate(template) {
   const workout = {
     id: DB.uuid(), name: template.name, date: new Date().toISOString(),
-    startedAt: new Date().toISOString(), finishedAt: null, notes: null,
+    startedAt: new Date().toISOString(), finishedAt: null, notes: null, isFromTemplate: true,
     exercises: template.exercises.map((te, i) => ({
-      id: DB.uuid(), exerciseId: te.exerciseId, order: i, notes: null, restSeconds: DEFAULT_REST_SECONDS, sets: []
+      id: DB.uuid(), exerciseId: te.exerciseId, order: i, notes: null,
+      restSeconds: state.settings.defaultRestSeconds, sets: [], fromTemplate: true
     }))
   };
   await DB.put("workouts", workout);
@@ -368,7 +377,10 @@ function renderGroupPicker() {
   const grid = container.querySelector("#group-grid");
   FLOW_GROUPS.forEach(group => {
     const card = el(`<div class="group-card"><span class="icon">${group.icon}</span><span class="label">${group.label}</span></div>`);
-    card.addEventListener("click", () => navigate("train/exercise", { groupKey: group.key }));
+    card.addEventListener("click", () => {
+      state.currentGroupKey = group.key;
+      navigate("train/exercise", { groupKey: group.key });
+    });
     grid.appendChild(card);
   });
 
@@ -394,7 +406,9 @@ function renderExerciseSelectForGroup() {
   const workout = getActiveWorkout();
   if (!workout) { navigate("train/start"); return el("<div></div>"); }
 
-  let currentGroup = FLOW_GROUPS.find(g => g.key === state.routeParams.groupKey) || FLOW_GROUPS[0];
+  const initialKey = state.routeParams.groupKey || state.currentGroupKey;
+  let currentGroup = FLOW_GROUPS.find(g => g.key === initialKey) || FLOW_GROUPS[0];
+  state.currentGroupKey = currentGroup.key;
 
   const container = el(`<div>
     <div class="top-row">
@@ -414,6 +428,7 @@ function renderExerciseSelectForGroup() {
     const chip = el(`<span class="group-chip ${group.key === currentGroup.key ? "selected" : ""}">${group.icon} ${group.label}</span>`);
     chip.addEventListener("click", () => {
       currentGroup = group;
+      state.currentGroupKey = group.key;
       switchRow.querySelectorAll(".group-chip").forEach(c => c.classList.remove("selected"));
       chip.classList.add("selected");
       renderCarousel();
@@ -466,7 +481,7 @@ function renderExerciseSelectForGroup() {
 async function addOrResumeExercise(workout, exerciseId) {
   let we = workout.exercises.find(e => e.exerciseId === exerciseId && e.sets.length === 0);
   if (!we) {
-    we = { id: DB.uuid(), exerciseId, order: workout.exercises.length, notes: null, restSeconds: DEFAULT_REST_SECONDS, sets: [] };
+    we = { id: DB.uuid(), exerciseId, order: workout.exercises.length, notes: null, restSeconds: state.settings.defaultRestSeconds, sets: [], fromTemplate: false };
     workout.exercises.push(we);
     await saveWorkout(workout);
     we = workout.exercises.find(e => e.id === we.id);
@@ -546,7 +561,7 @@ function renderLogExercise() {
     <button class="btn-primary success" id="finish-btn" style="margin-top:10px;">✓ Finalizar entrenamiento</button>
   </div>`);
 
-  container.querySelector("#back-btn").addEventListener("click", () => navigate("train/group"));
+  container.querySelector("#back-btn").addEventListener("click", () => goToExerciseGroupOrList());
 
   const weightInput = container.querySelector("#weight-input");
   const repsInput = container.querySelector("#reps-input");
@@ -604,9 +619,7 @@ function renderLogExercise() {
   });
 
   container.querySelector("#next-exercise-btn").addEventListener("click", () => {
-    const pending = workout.exercises.find(e => e.id !== we.id && e.sets.length === 0);
-    if (pending) navigate("train/log", { weId: pending.id });
-    else navigate("train/group");
+    goToNextExercise(workout, we.id);
   });
 
   const finish = async () => {
@@ -624,6 +637,53 @@ function renderLogExercise() {
   return container;
 }
 
+// Decide a dónde ir al pulsar "Siguiente ejercicio": si el entrenamiento
+// viene de una rutina y quedan ejercicios de esa rutina sin registrar,
+// pregunta; si no, va directo al listado del grupo muscular actual.
+function goToNextExercise(workout, currentWeId) {
+  const pendingTemplateWe = workout.isFromTemplate
+    ? workout.exercises.find(e => e.fromTemplate && e.id !== currentWeId && e.sets.length === 0)
+    : null;
+
+  if (pendingTemplateWe) {
+    openNextExerciseChoiceSheet(pendingTemplateWe);
+    return;
+  }
+  goToExerciseGroupOrList();
+}
+
+function goToExerciseGroupOrList() {
+  if (state.currentGroupKey) {
+    navigate("train/exercise", { groupKey: state.currentGroupKey });
+  } else {
+    navigate("train/group");
+  }
+}
+
+function openNextExerciseChoiceSheet(pendingTemplateWe) {
+  const exercise = getExercise(pendingTemplateWe.exerciseId);
+  const backdrop = el(`<div class="sheet-backdrop">
+    <div class="sheet">
+      <div class="sheet-header"><h2>Siguiente ejercicio</h2><button class="icon-btn" data-close>✕</button></div>
+      <div class="sheet-footer" style="border-top:none;">
+        <button class="btn-primary" id="continue-routine-btn">▶ Siguiente de la rutina${exercise ? ": " + exercise.name : ""}</button>
+        <button class="btn-secondary" id="add-other-btn" style="margin-top:10px;">＋ Añadir otro ejercicio</button>
+      </div>
+    </div>
+  </div>`);
+  backdrop.querySelector("[data-close]").addEventListener("click", () => backdrop.remove());
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector("#continue-routine-btn").addEventListener("click", () => {
+    backdrop.remove();
+    navigate("train/log", { weId: pendingTemplateWe.id });
+  });
+  backdrop.querySelector("#add-other-btn").addEventListener("click", () => {
+    backdrop.remove();
+    goToExerciseGroupOrList();
+  });
+  document.body.appendChild(backdrop);
+}
+
 /* ---------------- Formulario de ejercicio (con foto) ---------------- */
 function openExerciseForm(existing, onSave, defaultGroup) {
   let pendingPhoto = existing ? existing.photo : null;
@@ -631,6 +691,8 @@ function openExerciseForm(existing, onSave, defaultGroup) {
   const backdrop = el(`<div class="sheet-backdrop">
     <div class="sheet">
       <div class="sheet-header"><h2>${existing ? "Editar ejercicio" : "Nuevo ejercicio"}</h2><button class="icon-btn" data-close>✕</button></div>
+      <div class="sheet-body">
+      <div class="field-label">Foto (opcional — máquina o ejercicio)</div>
 
       <div class="field-label">Foto (opcional — máquina o ejercicio)</div>
       <div class="photo-upload-wrap">
@@ -657,8 +719,11 @@ function openExerciseForm(existing, onSave, defaultGroup) {
       </select>
       <div class="field-label">Notas (opcional)</div>
       <textarea class="field" id="ex-notes" rows="3">${existing && existing.notes ? existing.notes : ""}</textarea>
-      <button class="btn-primary" style="margin-top:14px;" id="ex-save">Guardar</button>
-      ${existing ? `<button class="btn-secondary" style="margin-top:8px; color:var(--danger);" id="ex-delete">Eliminar ejercicio</button>` : ""}
+      </div>
+      <div class="sheet-footer">
+        <button class="btn-primary" id="ex-save">Guardar</button>
+        ${existing ? `<button class="btn-secondary" style="margin-top:8px; color:var(--danger);" id="ex-delete">Eliminar ejercicio</button>` : ""}
+      </div>
     </div>
   </div>`);
 
@@ -716,10 +781,14 @@ function openExercisePicker(onSelect) {
   const backdrop = el(`<div class="sheet-backdrop">
     <div class="sheet">
       <div class="sheet-header"><h2>Elegir ejercicio</h2><button class="icon-btn" data-close>✕</button></div>
-      <input class="field search-input" placeholder="Buscar ejercicio" />
-      <div class="muscle-scroll" id="group-chips"></div>
-      <div id="exercise-results"></div>
-      <button class="btn-secondary" style="margin-top:10px;" id="new-exercise-btn">＋ Crear ejercicio personalizado</button>
+      <div class="sheet-fixed-top">
+        <input class="field search-input" placeholder="Buscar ejercicio" />
+        <div class="muscle-scroll" id="group-chips"></div>
+      </div>
+      <div class="sheet-body"><div id="exercise-results"></div></div>
+      <div class="sheet-footer">
+        <button class="btn-secondary" id="new-exercise-btn">＋ Crear ejercicio personalizado</button>
+      </div>
     </div>
   </div>`);
 
@@ -1106,13 +1175,17 @@ function openTemplateForm(existing) {
   const backdrop = el(`<div class="sheet-backdrop">
     <div class="sheet">
       <div class="sheet-header"><h2>${existing ? "Editar rutina" : "Nueva rutina"}</h2><button class="icon-btn" data-close>✕</button></div>
-      <div class="field-label">Nombre</div>
-      <input class="field" id="tpl-name" placeholder="Ej. Pecho + Tríceps" value="${existing ? existing.name : ""}" />
-      <div class="field-label">Ejercicios</div>
-      <div id="tpl-exercises"></div>
-      <button class="btn-secondary" id="tpl-add-ex" style="margin-top:8px;">＋ Añadir ejercicio</button>
-      <button class="btn-primary" id="tpl-save" style="margin-top:14px;">${existing ? "Guardar cambios" : "Guardar rutina"}</button>
-      ${existing ? `<button class="btn-secondary" style="margin-top:8px; color:var(--danger);" id="tpl-delete">Eliminar rutina</button>` : ""}
+      <div class="sheet-fixed-top">
+        <div class="field-label" style="margin-top:0;">Nombre</div>
+        <input class="field" id="tpl-name" placeholder="Ej. Pecho + Tríceps" value="${existing ? existing.name : ""}" />
+        <div class="field-label">Ejercicios</div>
+      </div>
+      <div class="sheet-body"><div id="tpl-exercises"></div></div>
+      <div class="sheet-footer">
+        <button class="btn-secondary" id="tpl-add-ex">＋ Añadir ejercicio</button>
+        <button class="btn-primary" id="tpl-save" style="margin-top:10px;">${existing ? "Guardar cambios" : "Guardar rutina"}</button>
+        ${existing ? `<button class="btn-secondary" style="margin-top:8px; color:var(--danger);" id="tpl-delete">Eliminar rutina</button>` : ""}
+      </div>
     </div>
   </div>`);
 
