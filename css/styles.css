@@ -39,6 +39,7 @@ html, body {
   color: var(--text);
   font-family: var(--font-body);
   height: 100%;
+  overflow: hidden;          
   overscroll-behavior-y: none;
 }
 
@@ -63,8 +64,8 @@ input, textarea {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh; 
+  height: 100%;     
+  overflow: hidden; 
 }
 
 .view {
