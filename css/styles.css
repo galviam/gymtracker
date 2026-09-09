@@ -39,7 +39,7 @@ html, body {
   color: var(--text);
   font-family: var(--font-body);
   height: 100%;
-  overflow: hidden;          
+  overflow: hidden;
   overscroll-behavior-y: none;
 }
 
@@ -62,20 +62,20 @@ input, textarea {
 }
 
 #app {
-  position: fixed; 
+  position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg);
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 .view {
   flex: 1;
-  min-height: 0; 
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--safe-top) + 20px) 16px calc(80px + var(--safe-bottom)) 16px;
+  padding: 0 16px calc(80px + var(--safe-bottom)) 16px;
 }
 
 /* ---------- Tabbar ---------- */
@@ -92,6 +92,7 @@ input, textarea {
   padding-bottom: var(--safe-bottom);
   z-index: 50;
 }
+
 @media (prefers-color-scheme: light) {
   .tabbar { background: rgba(255,255,255,0.92); }
 }
@@ -286,12 +287,12 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--safe-top) + 8px) 0 10px;
-  margin: calc(var(--safe-top) * -1 - 8px) -16px 12px;
-  padding-left: 16px;
-  padding-right: 16px;
-  background: linear-gradient(var(--bg) 75%, transparent);
+  gap: 8px;
+  padding: calc(var(--safe-top) + 14px) 16px 12px;
+  margin: 0 -16px 12px;
+  background: var(--bg);
 }
+
 .icon-btn {
   font-size: 15px;
   padding: 6px 10px;

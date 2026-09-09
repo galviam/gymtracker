@@ -279,7 +279,7 @@ function renderHome() {
    ================================================================ */
 function renderStartWorkout() {
   const container = el(`<div>
-    <div class="page-title">Entrenar</div>
+    <div class="top-row"><div class="top-row-title" style="padding-left:0;">Entrenar</div></div>
     <div class="field-label">Nombre del entrenamiento (opcional)</div>
     <input class="field" id="workout-name" placeholder="Ej. Entrenamiento de hoy" style="margin-bottom:18px;" />
     <div id="start-blank"></div>
@@ -363,13 +363,10 @@ function renderGroupPicker() {
 
   const container = el(`<div>
     <div class="top-row">
-      <div>
-        <div class="muted" style="font-size:12px;">${workout.name}</div>
-        <h1 style="font-size:24px;">Grupo de trabajo</h1>
-      </div>
+      <div class="top-row-title" style="padding-left:0;">Grupo de trabajo</div>
       <button class="icon-btn" id="finish-icon" title="Finalizar">✓</button>
     </div>
-    ${workout.exercises.length ? `<div class="muted" style="font-size:13px; margin-bottom:14px;">${workout.exercises.length} ejercicios · ${totalSets(workout)} series</div>` : ""}
+    <div class="muted" style="font-size:13px; margin-bottom:14px;">${workout.name}${workout.exercises.length ? ` · ${workout.exercises.length} ejercicios · ${totalSets(workout)} series` : ""}</div>
     <div class="group-grid" id="group-grid"></div>
     ${workout.exercises.length ? `<button class="btn-primary success" id="finish-btn" style="margin-top:22px;">✓ Finalizar entrenamiento</button>` : ""}
   </div>`);
