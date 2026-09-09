@@ -208,11 +208,11 @@ function exerciseThumbHTML(exercise, size = "small") {
     }
     return `<div class="exercise-thumb-placeholder">🏋️</div>`;
   }
-  // size === "large" -> pantalla de registro de la serie
+  // size === "large" -> pantalla de registro de la serie: si no hay foto, no se muestra nada
   if (exercise && exercise.photo) {
     return `<img class="log-photo" src="${exercise.photo}" alt="${exercise.name}" />`;
   }
-  return `<div class="log-photo-placeholder"><span class="log-photo-title">${exercise ? exercise.name : "Ejercicio"}</span></div>`;
+  return "";
 }
 
 /* ================================================================
