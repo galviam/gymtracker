@@ -29,12 +29,16 @@
 <body>
 
   <div id="debug-badge" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:red; color:white; font-size:10px; padding:4px; text-align:center;">
-    v21 · safe-bottom: <span id="debug-safebottom"></span>
+    safe-area-bottom real: <span id="debug-safebottom"></span>
   </div>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const val = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom');
-      document.getElementById('debug-safebottom').textContent = val || '(vacío)';
+      const probe = document.createElement('div');
+      probe.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
+      document.body.appendChild(probe);
+      const val = getComputedStyle(probe).paddingBottom;
+      document.getElementById('debug-safebottom').textContent = val;
+      probe.remove();
     });
   </script>
 
