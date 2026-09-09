@@ -62,11 +62,9 @@ input, textarea {
 }
 
 #app {
-  position: fixed;
-  inset: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  height: var(--app-height, 100%);
   overflow: hidden;
 }
 

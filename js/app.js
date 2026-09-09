@@ -8,13 +8,7 @@ const MUSCLE_GROUPS = ["Pecho", "Espalda", "Hombros", "Bíceps", "Tríceps", "Pi
 const EXERCISE_TYPES = ["Barra", "Mancuerna", "Máquina", "Polea", "Peso corporal", "Otro"];
 const DEFAULT_REST_SECONDS = 90;
 
-// ============================================================
-// 👉 EDITA AQUÍ el flujo "Grupo de trabajo" que se ve al entrenar.
-// Cada grupo del flujo puede agrupar varios muscleGroup de la biblioteca.
-// Para añadir "Pecho" al flujo (no está incluido por defecto), añade un
-// objeto nuevo, por ejemplo:
-//   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
-// ============================================================
+
 const FLOW_GROUPS = [
   { key: "Pecho", label: "Pecho", icon: "🏋️", groups: ["Pecho"] },
   { key: "Espalda", label: "Espalda", icon: "🦾", groups: ["Espalda"] },
@@ -34,6 +28,7 @@ const state = {
   workouts: [],
   templates: [],
   activeWorkoutId: null,
+  trainRoute: null,
   currentGroupKey: null,
   settings: { defaultRestSeconds: DEFAULT_REST_SECONDS, theme: "pink" },
   restTimer: { active: false, seconds: 0, intervalId: null },
@@ -155,16 +150,29 @@ function trainEntryRoute() {
   const todayWorkout = state.workouts.find(w => DateFmt.isToday(new Date(w.date)) && !w.finishedAt);
   if (todayWorkout) {
     state.activeWorkoutId = todayWorkout.id;
+
+    if (state.trainRoute) {
+      if (state.trainRoute.route === "train/log") {
+        const we = todayWorkout.exercises.find(e => e.id === state.trainRoute.params.weId);
+        if (we) return state.trainRoute; // el ejercicio sigue existiendo: vuelve ahí
+      } else {
+        return state.trainRoute; // train/group o train/exercise: vuelve tal cual
+      }
+    }
+
     const pending = todayWorkout.exercises.find(we => we.sets.length === 0);
-    if (pending) { state.routeParams = { weId: pending.id }; return "train/log"; }
-    return "train/group";
+    if (pending) return { route: "train/log", params: { weId: pending.id } };
+    return { route: "train/group", params: {} };
   }
-  return "train/start";
+  return { route: "train/start", params: {} };
 }
 
 function navigate(route, params = {}) {
   state.route = route;
   state.routeParams = params;
+  if (route.startsWith("train/") && route !== "train/start") {
+    state.trainRoute = { route, params };
+  }
   render();
   $view.scrollTop = 0;
 }
@@ -245,7 +253,8 @@ function renderHome() {
     state.tab = "train";
     if (isOngoing) {
       state.activeWorkoutId = todayWorkout.id;
-      navigate(trainEntryRoute());
+      const dest = trainEntryRoute();
+      navigate(dest.route, dest.params);
     } else {
       navigate("train/start");
     }
@@ -387,6 +396,7 @@ function renderGroupPicker() {
     await saveWorkout(workout);
     stopRestTimer();
     state.activeWorkoutId = null;
+    state.trainRoute = null;
     state.tab = "home";
     navigate("home");
   };
@@ -645,6 +655,7 @@ function renderHistory() {
     await saveWorkout(workout);
     stopRestTimer();
     state.activeWorkoutId = null;
+    state.trainRoute = null;
     state.tab = "home";
     navigate("home");
   };
