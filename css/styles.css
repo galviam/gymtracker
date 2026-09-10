@@ -67,6 +67,8 @@ input, textarea {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px 100px 16px;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* ---------- Tabbar ---------- */
@@ -80,6 +82,8 @@ input, textarea {
   border-top: 1px solid var(--border);
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
   z-index: 50;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 
@@ -278,9 +282,11 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: calc(env(safe-area-inset-top, 0px) + 6px) 16px 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 4px) 16px 12px;
   margin: 0 -16px 12px;
   background: var(--bg);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .icon-btn {
